@@ -1,0 +1,1 @@
+Flatbuffer compiler for Nim
