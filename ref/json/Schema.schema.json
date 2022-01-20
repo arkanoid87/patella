@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "definitions": {
+    "org_apache_arrow_flatbuf_MetadataVersion" : {
+      "type" : "string",
+      "enum": ["V1", "V2", "V3", "V4", "V5"]
+    },
+    "org_apache_arrow_flatbuf_Feature" : {
+      "type" : "string",
+      "enum": ["UNUSED", "DICTIONARY_REPLACEMENT", "COMPRESSED_BODY"]
+    },
+    "org_apache_arrow_flatbuf_UnionMode" : {
+      "type" : "string",
+      "enum": ["Sparse", "Dense"]
+    },
+    "org_apache_arrow_flatbuf_Precision" : {
+      "type" : "string",
+      "enum": ["HALF", "SINGLE", "DOUBLE"]
+    },
+    "org_apache_arrow_flatbuf_DateUnit" : {
+      "type" : "string",
+      "enum": ["DAY", "MILLISECOND"]
+    },
+    "org_apache_arrow_flatbuf_TimeUnit" : {
+      "type" : "string",
+      "enum": ["SECOND", "MILLISECOND", "MICROSECOND", "NANOSECOND"]
+    },
+    "org_apache_arrow_flatbuf_IntervalUnit" : {
+      "type" : "string",
+      "enum": ["YEAR_MONTH", "DAY_TIME", "MONTH_DAY_NANO"]
+    },
+    "org_apache_arrow_flatbuf_Type" : {
+      "type" : "string",
+      "enum": ["NONE", "Null", "Int", "FloatingPoint", "Binary", "Utf8", "Bool", "Decimal", "Date", "Time", "Timestamp", "Interval", "List", "Struct_", "Union", "FixedSizeBinary", "FixedSizeList", "Map", "Duration", "LargeBinary", "LargeUtf8", "LargeList"]
+    },
+    "org_apache_arrow_flatbuf_DictionaryKind" : {
+      "type" : "string",
+      "enum": ["DenseArray"]
+    },
+    "org_apache_arrow_flatbuf_Endianness" : {
+      "type" : "string",
+      "enum": ["Little", "Big"]
+    },
+    "org_apache_arrow_flatbuf_Null" : {
+      "type" : "object",
+      "description" : "These are stored in the flatbuffer in the Type union below",
+      "properties" : {
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Struct_" : {
+      "type" : "object",
+      "description" : "A Struct_ in the flatbuffer metadata is the same as an Arrow Struct\n(according to the physical memory layout). We used Struct_ here as\nStruct is a reserved word in Flatbuffers",
+      "properties" : {
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_List" : {
+      "type" : "object",
+      "properties" : {
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_LargeList" : {
+      "type" : "object",
+      "description" : "Same as List, but with 64-bit offsets, allowing to represent\nextremely large data values.",
+      "properties" : {
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_FixedSizeList" : {
+      "type" : "object",
+      "properties" : {
+        "listSize" : {
+                "type" : "integer", "minimum" : -2147483648, "maximum" : 2147483647,
+                "description" : "Number of list items per value"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Map" : {
+      "type" : "object",
+      "description" : "A Map is a logical nested type that is represented as\n\nList<entries: Struct<key: K, value: V>>\n\nIn this layout, the keys and values are each respectively contiguous. We do\nnot constrain the key and value types, so the application is responsible\nfor ensuring that the keys are hashable and unique. Whether the keys are sorted\nmay be set in the metadata for this field.\n\nIn a field with Map type, the field has a child Struct field, which then\nhas two children: key type and the second the value type. The names of the\nchild fields may be respectively \"entries\", \"key\", and \"value\", but this is\nnot enforced.\n\nMap\n```text\n- child[0] entries: Struct\n- child[0] key: K\n- child[1] value: V\n```\nNeither the \"entries\" field nor the \"key\" field may be nullable.\n\nThe metadata is structured so that Arrow systems without special handling\nfor Map can make Map an alias for List. The \"layout\" attribute for the Map\nfield must have the same contents as a List.",
+      "properties" : {
+        "keysSorted" : {
+                "type" : "boolean",
+                "description" : "Set to true if the keys within each value are sorted"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Union" : {
+      "type" : "object",
+      "description" : "A union is a complex type with children in Field\nBy default ids in the type vector refer to the offsets in the children\noptionally typeIds provides an indirection between the child offset and the type id\nfor each child `typeIds[offset]` is the id used in the type vector",
+      "properties" : {
+        "mode" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_UnionMode"
+              },
+        "typeIds" : {
+                "type" : "array", "items" : {"type" : "integer", "minimum" : -2147483648, "maximum" : 2147483647}
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Int" : {
+      "type" : "object",
+      "properties" : {
+        "bitWidth" : {
+                "type" : "integer", "minimum" : -2147483648, "maximum" : 2147483647
+              },
+        "is_signed" : {
+                "type" : "boolean"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_FloatingPoint" : {
+      "type" : "object",
+      "properties" : {
+        "precision" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_Precision"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Utf8" : {
+      "type" : "object",
+      "description" : "Unicode with UTF-8 encoding",
+      "properties" : {
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Binary" : {
+      "type" : "object",
+      "description" : "Opaque binary data",
+      "properties" : {
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_LargeUtf8" : {
+      "type" : "object",
+      "description" : "Same as Utf8, but with 64-bit offsets, allowing to represent\nextremely large data values.",
+      "properties" : {
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_LargeBinary" : {
+      "type" : "object",
+      "description" : "Same as Binary, but with 64-bit offsets, allowing to represent\nextremely large data values.",
+      "properties" : {
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_FixedSizeBinary" : {
+      "type" : "object",
+      "properties" : {
+        "byteWidth" : {
+                "type" : "integer", "minimum" : -2147483648, "maximum" : 2147483647,
+                "description" : "Number of bytes per value"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Bool" : {
+      "type" : "object",
+      "properties" : {
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Decimal" : {
+      "type" : "object",
+      "description" : "Exact decimal value represented as an integer value in two's\ncomplement. Currently only 128-bit (16-byte) and 256-bit (32-byte) integers\nare used. The representation uses the endianness indicated\nin the Schema.",
+      "properties" : {
+        "precision" : {
+                "type" : "integer", "minimum" : -2147483648, "maximum" : 2147483647,
+                "description" : "Total number of decimal digits"
+              },
+        "scale" : {
+                "type" : "integer", "minimum" : -2147483648, "maximum" : 2147483647,
+                "description" : "Number of digits after the decimal point \".\""
+              },
+        "bitWidth" : {
+                "type" : "integer", "minimum" : -2147483648, "maximum" : 2147483647,
+                "description" : "Number of bits per value. The only accepted widths are 128 and 256.\nWe use bitWidth for consistency with Int::bitWidth."
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Date" : {
+      "type" : "object",
+      "description" : "Date is either a 32-bit or 64-bit signed integer type representing an\nelapsed time since UNIX epoch (1970-01-01), stored in either of two units:\n\n* Milliseconds (64 bits) indicating UNIX time elapsed since the epoch (no\nleap seconds), where the values are evenly divisible by 86400000\n* Days (32 bits) since the UNIX epoch",
+      "properties" : {
+        "unit" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_DateUnit"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Time" : {
+      "type" : "object",
+      "description" : "Time is either a 32-bit or 64-bit signed integer type representing an\nelapsed time since midnight, stored in either of four units: seconds,\nmilliseconds, microseconds or nanoseconds.\n\nThe integer `bitWidth` depends on the `unit` and must be one of the following:\n* SECOND and MILLISECOND: 32 bits\n* MICROSECOND and NANOSECOND: 64 bits\n\nThe allowed values are between 0 (inclusive) and 86400 (=24*60*60) seconds\n(exclusive), adjusted for the time unit (for example, up to 86400000\nexclusive for the MILLISECOND unit).\nThis definition doesn't allow for leap seconds. Time values from\nmeasurements with leap seconds will need to be corrected when ingesting\ninto Arrow (for example by replacing the value 86400 with 86399).",
+      "properties" : {
+        "unit" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_TimeUnit"
+              },
+        "bitWidth" : {
+                "type" : "integer", "minimum" : -2147483648, "maximum" : 2147483647
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Timestamp" : {
+      "type" : "object",
+      "description" : "Timestamp is a 64-bit signed integer representing an elapsed time since a\nfixed epoch, stored in either of four units: seconds, milliseconds,\nmicroseconds or nanoseconds, and is optionally annotated with a timezone.\n\nTimestamp values do not include any leap seconds (in other words, all\ndays are considered 86400 seconds long).\n\nTimestamps with a non-empty timezone\n------------------------------------\n\nIf a Timestamp column has a non-empty timezone value, its epoch is\n1970-01-01 00:00:00 (January 1st 1970, midnight) in the *UTC* timezone\n(the Unix epoch), regardless of the Timestamp's own timezone.\n\nTherefore, timestamp values with a non-empty timezone correspond to\nphysical points in time together with some additional information about\nhow the data was obtained and/or how to display it (the timezone).\n\nFor example, the timestamp value 0 with the timezone string \"Europe/Paris\"\ncorresponds to \"January 1st 1970, 00h00\" in the UTC timezone, but the\napplication may prefer to display it as \"January 1st 1970, 01h00\" in\nthe Europe/Paris timezone (which is the same physical point in time).\n\nOne consequence is that timestamp values with a non-empty timezone\ncan be compared and ordered directly, since they all share the same\nwell-known point of reference (the Unix epoch).\n\nTimestamps with an unset / empty timezone\n-----------------------------------------\n\nIf a Timestamp column has no timezone value, its epoch is\n1970-01-01 00:00:00 (January 1st 1970, midnight) in an *unknown* timezone.\n\nTherefore, timestamp values without a timezone cannot be meaningfully\ninterpreted as physical points in time, but only as calendar / clock\nindications (\"wall clock time\") in an unspecified timezone.\n\nFor example, the timestamp value 0 with an empty timezone string\ncorresponds to \"January 1st 1970, 00h00\" in an unknown timezone: there\nis not enough information to interpret it as a well-defined physical\npoint in time.\n\nOne consequence is that timestamp values without a timezone cannot\nbe reliably compared or ordered, since they may have different points of\nreference.  In particular, it is *not* possible to interpret an unset\nor empty timezone as the same as \"UTC\".\n\nConversion between timezones\n----------------------------\n\nIf a Timestamp column has a non-empty timezone, changing the timezone\nto a different non-empty value is a metadata-only operation:\nthe timestamp values need not change as their point of reference remains\nthe same (the Unix epoch).\n\nHowever, if a Timestamp column has no timezone value, changing it to a\nnon-empty value requires to think about the desired semantics.\nOne possibility is to assume that the original timestamp values are\nrelative to the epoch of the timezone being set; timestamp values should\nthen adjusted to the Unix epoch (for example, changing the timezone from\nempty to \"Europe/Paris\" would require converting the timestamp values\nfrom \"Europe/Paris\" to \"UTC\", which seems counter-intuitive but is\nnevertheless correct).\n\nGuidelines for encoding data from external libraries\n----------------------------------------------------\n\nDate & time libraries often have multiple different data types for temporal\ndata. In order to ease interoperability between different implementations the\nArrow project has some recommendations for encoding these types into a Timestamp\ncolumn.\n\nAn \"instant\" represents a physical point in time that has no relevant timezone\n(for example, astronomical data). To encode an instant, use a Timestamp with\nthe timezone string set to \"UTC\", and make sure the Timestamp values\nare relative to the UTC epoch (January 1st 1970, midnight).\n\nA \"zoned date-time\" represents a physical point in time annotated with an\ninformative timezone (for example, the timezone in which the data was\nrecorded).  To encode a zoned date-time, use a Timestamp with the timezone\nstring set to the name of the timezone, and make sure the Timestamp values\nare relative to the UTC epoch (January 1st 1970, midnight).\n\n(There is some ambiguity between an instant and a zoned date-time with the\nUTC timezone.  Both of these are stored the same in Arrow.  Typically,\nthis distinction does not matter.  If it does, then an application should\nuse custom metadata or an extension type to distinguish between the two cases.)\n\nAn \"offset date-time\" represents a physical point in time combined with an\nexplicit offset from UTC.  To encode an offset date-time, use a Timestamp\nwith the timezone string set to the numeric timezone offset string\n(e.g. \"+03:00\"), and make sure the Timestamp values are relative to\nthe UTC epoch (January 1st 1970, midnight).\n\nA \"naive date-time\" (also called \"local date-time\" in some libraries)\nrepresents a wall clock time combined with a calendar date, but with\nno indication of how to map this information to a physical point in time.\nNaive date-times must be handled with care because of this missing\ninformation, and also because daylight saving time (DST) may make\nsome values ambiguous or non-existent. A naive date-time may be\nstored as a struct with Date and Time fields. However, it may also be\nencoded into a Timestamp column with an empty timezone. The timestamp\nvalues should be computed \"as if\" the timezone of the date-time values\nwas UTC; for example, the naive date-time \"January 1st 1970, 00h00\" would\nbe encoded as timestamp value 0.",
+      "properties" : {
+        "unit" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_TimeUnit"
+              },
+        "timezone" : {
+                "type" : "string",
+                "description" : "The timezone is an optional string indicating the name of a timezone,\none of:\n\n* As used in the Olson timezone database (the \"tz database\" or\n\"tzdata\"), such as \"America/New_York\".\n* An absolute timezone offset of the form \"+XX:XX\" or \"-XX:XX\",\nsuch as \"+07:30\".\n\nWhether a timezone string is present indicates different semantics about\nthe data (see above)."
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Interval" : {
+      "type" : "object",
+      "properties" : {
+        "unit" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_IntervalUnit"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Duration" : {
+      "type" : "object",
+      "properties" : {
+        "unit" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_TimeUnit"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_KeyValue" : {
+      "type" : "object",
+      "description" : "----------------------------------------------------------------------\nuser defined key value pairs to add custom metadata to arrow\nkey namespacing is the responsibility of the user",
+      "properties" : {
+        "key" : {
+                "type" : "string"
+              },
+        "value" : {
+                "type" : "string"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_DictionaryEncoding" : {
+      "type" : "object",
+      "properties" : {
+        "id" : {
+                "type" : "integer", "minimum" : -9223372036854775808, "maximum" : 9223372036854775807,
+                "description" : "The known dictionary id in the application where this data is used. In\nthe file or streaming formats, the dictionary ids are found in the\nDictionaryBatch messages"
+              },
+        "indexType" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_Int",
+                "description" : "The dictionary indices are constrained to be non-negative integers. If\nthis field is null, the indices must be signed int32. To maximize\ncross-language compatibility and performance, implementations are\nrecommended to prefer signed integer types over unsigned integer types\nand to avoid uint64 indices unless they are required by an application."
+              },
+        "isOrdered" : {
+                "type" : "boolean",
+                "description" : "By default, dictionaries are not ordered, or the order does not have\nsemantic meaning. In some statistical, applications, dictionary-encoding\nis used to represent ordered categorical data, and we provide a way to\npreserve that metadata here"
+              },
+        "dictionaryKind" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_DictionaryKind"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Field" : {
+      "type" : "object",
+      "description" : "----------------------------------------------------------------------\nA field represents a named column in a record / row batch or child of a\nnested type.",
+      "properties" : {
+        "name" : {
+                "type" : "string",
+                "description" : "Name is not required, in i.e. a List"
+              },
+        "nullable" : {
+                "type" : "boolean",
+                "description" : "Whether or not this field can contain nulls. Should be true in general."
+              },
+        "type_type" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_Type"
+              },
+        "type" : {
+                "anyOf": [{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Null" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Int" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_FloatingPoint" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Binary" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Utf8" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Bool" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Decimal" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Date" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Time" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Timestamp" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Interval" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_List" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Struct_" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Union" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_FixedSizeBinary" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_FixedSizeList" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Map" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_Duration" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_LargeBinary" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_LargeUtf8" },{ "$ref" : "#/definitions/org_apache_arrow_flatbuf_LargeList" }],
+                "description" : "This is the type of the decoded value if the field is dictionary encoded."
+              },
+        "dictionary" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_DictionaryEncoding",
+                "description" : "Present only if the field is dictionary encoded."
+              },
+        "children" : {
+                "type" : "array", "items" : {"$ref" : "#/definitions/org_apache_arrow_flatbuf_Field"},
+                "description" : "children apply only to nested data types like Struct, List and Union. For\nprimitive types children will have length 0."
+              },
+        "custom_metadata" : {
+                "type" : "array", "items" : {"$ref" : "#/definitions/org_apache_arrow_flatbuf_KeyValue"},
+                "description" : "User-defined metadata"
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Buffer" : {
+      "type" : "object",
+      "description" : "----------------------------------------------------------------------\nA Buffer represents a single contiguous memory segment",
+      "properties" : {
+        "offset" : {
+                "type" : "integer", "minimum" : -9223372036854775808, "maximum" : 9223372036854775807,
+                "description" : "The relative offset into the shared memory page where the bytes for this\nbuffer starts"
+              },
+        "length" : {
+                "type" : "integer", "minimum" : -9223372036854775808, "maximum" : 9223372036854775807,
+                "description" : "The absolute length (in bytes) of the memory buffer. The memory is found\nfrom offset (inclusive) to offset + length (non-inclusive). When building\nmessages using the encapsulated IPC message, padding bytes may be written\nafter a buffer, but such padding bytes do not need to be accounted for in\nthe size here."
+              }
+      },
+      "additionalProperties" : false
+    },
+    "org_apache_arrow_flatbuf_Schema" : {
+      "type" : "object",
+      "description" : "----------------------------------------------------------------------\nA Schema describes the columns in a row batch",
+      "properties" : {
+        "endianness" : {
+                "$ref" : "#/definitions/org_apache_arrow_flatbuf_Endianness",
+                "description" : "endianness of the buffer\nit is Little Endian by default\nif endianness doesn't match the underlying system then the vectors need to be converted"
+              },
+        "fields" : {
+                "type" : "array", "items" : {"$ref" : "#/definitions/org_apache_arrow_flatbuf_Field"}
+              },
+        "custom_metadata" : {
+                "type" : "array", "items" : {"$ref" : "#/definitions/org_apache_arrow_flatbuf_KeyValue"}
+              },
+        "features" : {
+                "type" : "array", "items" : {"$ref" : "#/definitions/org_apache_arrow_flatbuf_Feature"},
+                "description" : "Features used in the stream/file."
+              }
+      },
+      "additionalProperties" : false
+    }
+  },
+  "$ref" : "#/definitions/org_apache_arrow_flatbuf_Schema"
+}
